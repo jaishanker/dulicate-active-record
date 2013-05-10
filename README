@@ -1,0 +1,42 @@
+function duplicatePosition(job_id,current_job_flag) {
+    showBlockShadow();
+    $.ajax({
+        url: '/ajax/duplicate_job',
+        type: "POST",
+        cache: false,
+        data: "job_id="+job_id+"&parent_id="+$('#parent_id').val()+"&current_job_flag="+current_job_flag
+    });
+}
+
+def duplicate_job
+    @job = Job.find_by_id(params[:job_id])
+    unless @job.nil?
+      ## Duplicates
+      # 1. Position Type
+      # 2. Pairing Logic Values
+      # 3. Certificates and Licenses
+      # 4. Languages
+      # 5. Work Environment & Role + Question & Answers
+      # 6. Daily Responsibilities
+      @duplicate_job = @job.dup :include => [:job_criteria_desired_employments, :job_criteria_certificates, :job_criteria_languages, :job_workenv_questions, :job_role_questions, :job_profile_responsibilities]
+     
+      @duplicate_job.save!(:validate => false)
+
+@job.added_roles.each do |role|
+        @duplicate_job.added_roles << role.dup
+      end
+      @job.added_universities.each do |university|
+        @duplicate_job.added_universities << university.dup
+      end
+      @job.added_degrees.each do |degree|
+        @duplicate_job.added_degrees << degree.dup
+      end
+      @job.job_attachments.each do |job_attachment|
+        begin
+          obj = @duplicate_job.job_attachments.new
+          obj.attachment = job_attachment.attachment
+          obj.attachment_title = job_attachment.attachment_title
+          obj.save!(:validate => false)
+        rescue 
+        end
+      end
